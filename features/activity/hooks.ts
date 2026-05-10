@@ -61,6 +61,8 @@ export function useActivityRealtime(groupIds: string[]) {
   useEffect(() => {
     if (!groupKey) return;
 
+    const ids = groupKey.split(',');
+
     const channel = supabase
       .channel(`activities-realtime-${groupKey}`)
       .on(
@@ -68,9 +70,12 @@ export function useActivityRealtime(groupIds: string[]) {
         { event: 'INSERT', schema: 'public', table: 'activities' },
         (payload) => {
           const newGroupId = (payload.new as { group_id?: string } | undefined)?.group_id;
-          if (!newGroupId || !groupIds.includes(newGroupId)) return;
-          // Invalidate feeds + badge
-          void queryClient.invalidateQueries({ queryKey: ['activities'] });
+          if (!newGroupId || !ids.includes(newGroupId)) return;
+          // Invalidate feeds immediately
+          void queryClient.invalidateQueries({ queryKey: ['activities', 'group'] });
+          void queryClient.invalidateQueries({ queryKey: ['activities', 'global'] });
+          // Refetch badge immediately (not just invalidate — forces instant update)
+          void queryClient.refetchQueries({ queryKey: ['activities', 'badge'] });
         },
       )
       .subscribe();
@@ -78,7 +83,6 @@ export function useActivityRealtime(groupIds: string[]) {
     return () => {
       void supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupKey, queryClient]);
 }
 
