@@ -13,7 +13,6 @@ interface Props {
 }
 
 const AMOUNT_COLOR = '#10B981';
-const DELETED_COLOR = '#94A3B8';
 
 export function ActivityRow({ activity, currentUserId, currency, showGroupBadge }: Props) {
   const { actor, type, payload, created_at } = activity;
@@ -41,6 +40,7 @@ export function ActivityRow({ activity, currentUserId, currency, showGroupBadge 
 
   const showMethodBadge = type === 'settlement_recorded' && !!payload.method;
   const showGroup = showGroupBadge && !!activity.group_name;
+  const hasBadges = showMethodBadge || showGroup;
 
   return (
     <Pressable
@@ -48,15 +48,12 @@ export function ActivityRow({ activity, currentUserId, currency, showGroupBadge 
       style={({ pressed }) => [styles.row, pressed && tappable && styles.rowPressed]}
       accessibilityRole={tappable ? 'button' : 'text'}
     >
-      {/* Actor avatar */}
-      <View style={styles.avatarWrap}>
-        <Avatar name={actor.name ?? '?'} />
-      </View>
+      <Avatar name={actor.name ?? '?'} />
 
-      {/* Content */}
       <View style={styles.content}>
-        <View style={styles.topRow}>
-          <View style={styles.textWrap}>
+        {/* Main text line */}
+        <View style={styles.textRow}>
+          <Text style={styles.text} numberOfLines={2}>
             <ActivityText
               type={type}
               actorName={actorName}
@@ -65,11 +62,14 @@ export function ActivityRow({ activity, currentUserId, currency, showGroupBadge 
               currentUserId={currentUserId}
               isDeleted={isDeleted}
             />
-          </View>
-          <Text style={styles.time}>{formatRelativeTime(created_at)}</Text>
+          </Text>
+          <Text style={styles.time} numberOfLines={1}>
+            {formatRelativeTime(created_at)}
+          </Text>
         </View>
 
-        {(showMethodBadge || showGroup) && (
+        {/* Badges — only when present */}
+        {hasBadges && (
           <View style={styles.badgeRow}>
             {showMethodBadge && (
               <View
@@ -95,7 +95,6 @@ export function ActivityRow({ activity, currentUserId, currency, showGroupBadge 
   );
 }
 
-// Simple initials avatar for the actor
 function Avatar({ name }: { name: string }) {
   const initials = name
     .split(' ')
@@ -132,84 +131,77 @@ function ActivityText({
   currentUserId: string | null;
   isDeleted: boolean;
 }) {
-  const dimColor = isDeleted ? DELETED_COLOR : '#334155';
-
   switch (type) {
     case 'expense_added':
     case 'expense_edited': {
       const verb = type === 'expense_added' ? 'added' : 'edited';
+      const dimStyle = isDeleted ? { color: '#94A3B8' } : {};
       return (
-        <Text style={[styles.text, { color: dimColor }]}>
-          <Text style={styles.bold}>{actorName}</Text>
-          {` ${verb} `}
-          <Text style={styles.bold}>{payload.description ?? 'an expense'}</Text>
+        <>
+          <Text style={[styles.actor, dimStyle]}>{actorName} </Text>
+          <Text style={[styles.body, dimStyle]}>{verb} </Text>
+          <Text style={[styles.actor, dimStyle]}>{payload.description ?? 'an expense'}</Text>
           {payload.amount != null && (
-            <Text style={{ color: AMOUNT_COLOR, fontWeight: '600' }}>
-              {' · '}
-              {formatMoney(payload.amount, cur)}
-            </Text>
+            <Text style={styles.amount}>{` · ${formatMoney(payload.amount, cur)}`}</Text>
           )}
-        </Text>
+        </>
       );
     }
 
     case 'expense_deleted':
       return (
-        <Text style={[styles.text, { color: dimColor }]}>
-          <Text style={styles.bold}>{actorName}</Text>
-          {' deleted '}
-          <Text style={[styles.bold, { textDecorationLine: 'line-through' }]}>
+        <>
+          <Text style={[styles.actor, { color: '#94A3B8' }]}>{actorName} </Text>
+          <Text style={[styles.body, { color: '#94A3B8' }]}>{'deleted '}</Text>
+          <Text style={[styles.actor, { color: '#94A3B8', textDecorationLine: 'line-through' }]}>
             {payload.description ?? 'an expense'}
           </Text>
-        </Text>
+        </>
       );
 
     case 'settlement_recorded': {
       const payerName =
-        payload.payer_id === currentUserId ? 'you' : (payload.payer_name ?? 'someone');
+        payload.payer_id === currentUserId ? 'You' : (payload.payer_name ?? 'Someone');
       const payeeName =
         payload.payee_id === currentUserId ? 'you' : (payload.payee_name ?? 'someone');
       return (
-        <Text style={styles.text}>
-          <Text style={styles.bold}>{payerName === 'you' ? 'You' : payerName}</Text>
-          {' paid '}
-          <Text style={styles.bold}>{payeeName}</Text>
+        <>
+          <Text style={styles.actor}>{payerName} </Text>
+          <Text style={styles.body}>{'paid '}</Text>
+          <Text style={styles.actor}>{payeeName}</Text>
           {payload.amount != null && (
-            <Text style={{ color: AMOUNT_COLOR, fontWeight: '600' }}>
-              {' · '}
-              {formatMoney(payload.amount, cur)}
-            </Text>
+            <Text style={styles.amount}>{` · ${formatMoney(payload.amount, cur)}`}</Text>
           )}
-        </Text>
+        </>
       );
     }
 
     case 'member_joined':
       return (
-        <Text style={styles.text}>
-          <Text style={styles.bold}>{actorName}</Text>
-          <Text style={{ color: '#64748B' }}>{' joined the group'}</Text>
-        </Text>
+        <>
+          <Text style={styles.actor}>{actorName} </Text>
+          <Text style={styles.body}>joined the group</Text>
+        </>
       );
 
     case 'member_left':
       return (
-        <Text style={styles.text}>
-          <Text style={styles.bold}>{actorName}</Text>
-          <Text style={{ color: '#64748B' }}>{' left the group'}</Text>
-        </Text>
+        <>
+          <Text style={styles.actor}>{actorName} </Text>
+          <Text style={styles.body}>left the group</Text>
+        </>
       );
 
     case 'group_created':
       return (
-        <Text style={styles.text}>
-          <Text style={styles.bold}>{actorName}</Text>
-          <Text style={{ color: '#64748B' }}>{' created the group'}</Text>
-        </Text>
+        <>
+          <Text style={styles.actor}>{actorName} </Text>
+          <Text style={styles.body}>created the group</Text>
+        </>
       );
 
     default:
-      return <Text style={[styles.text, { color: '#64748B' }]}>{actorName}</Text>;
+      return <Text style={styles.body}>{actorName}</Text>;
   }
 }
 
@@ -218,84 +210,90 @@ function ActivityText({
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E2E8F0',
     backgroundColor: '#fff',
-    gap: 12,
+    gap: 10,
   },
   rowPressed: {
     backgroundColor: '#F8FAFC',
   },
-  avatarWrap: {
-    paddingTop: 1,
-  },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 2,
   },
   avatarText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   content: {
     flex: 1,
-    gap: 6,
+    gap: 4,
   },
-  topRow: {
+  textRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-  },
-  textWrap: {
-    flex: 1,
+    gap: 6,
   },
   text: {
+    flex: 1,
     fontSize: 14,
-    color: '#334155',
     lineHeight: 20,
+    color: '#334155',
   },
-  bold: {
+  actor: {
     fontWeight: '700',
     color: '#0F172A',
+    fontSize: 14,
+  },
+  body: {
+    fontWeight: '400',
+    color: '#475569',
+    fontSize: 14,
+  },
+  amount: {
+    fontWeight: '600',
+    color: AMOUNT_COLOR,
+    fontSize: 14,
   },
   time: {
     fontSize: 11,
     color: '#94A3B8',
-    marginTop: 2,
-    flexShrink: 0,
+    marginTop: 3,
+    minWidth: 36,
+    textAlign: 'right',
   },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 5,
+    marginTop: 1,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
   },
-  badgeUpi: {
-    backgroundColor: '#EFF6FF',
-  },
-  badgeCash: {
-    backgroundColor: '#F0FDF4',
-  },
+  badgeUpi: { backgroundColor: '#EFF6FF' },
+  badgeCash: { backgroundColor: '#F0FDF4' },
   badgeUpiText: {
     fontSize: 10,
     fontWeight: '700',
     color: '#3B82F6',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   badgeGroup: {
     backgroundColor: '#F1F5F9',
-    maxWidth: 160,
+    maxWidth: 150,
   },
   badgeGroupText: {
     fontSize: 11,
