@@ -1,20 +1,17 @@
-import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { Tabs } from 'expo-router';
+import { Bell, User, Users } from 'lucide-react-native';
 
-// Placeholder tab icons — swap for a proper icon library in Slice 2
-const TAB_ICONS = {
-  groups: '👥',
-  activity: '🔔',
-  profile: '👤',
-} as const;
+const ACTIVE = '#6C47FF';
+const INACTIVE = '#A1A1AA';
 
 export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#6C47FF',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: ACTIVE,
+        tabBarInactiveTintColor: INACTIVE,
         tabBarStyle: {
           borderTopColor: '#E2E8F0',
           paddingBottom: Platform.OS === 'ios' ? 0 : 8,
@@ -25,25 +22,25 @@ export default function AppLayout() {
         name="groups"
         options={{
           title: 'Groups',
-          tabBarIcon: ({ focused }) => (focused ? '👥' : TAB_ICONS.groups),
+          tabBarIcon: ({ color }) => <Users size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="activity"
         options={{
           title: 'Activity',
-          tabBarIcon: () => TAB_ICONS.activity,
-          href: null, // hidden until Slice 8
+          tabBarIcon: ({ color }) => <Bell size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: () => TAB_ICONS.profile,
-          href: null, // hidden until Slice 2
+          tabBarIcon: ({ color }) => <User size={22} color={color} />,
         }}
       />
+      {/* join/[code] — deep-link only */}
+      <Tabs.Screen name="join" options={{ href: null, headerShown: false }} />
     </Tabs>
   );
 }

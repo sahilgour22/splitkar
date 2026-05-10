@@ -1,7 +1,7 @@
 import '../global.css';
 
 import { useEffect } from 'react';
-import { useRouter, useSegments, Slot } from 'expo-router';
+import { useRouter, useSegments, Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -37,7 +37,13 @@ function AuthGuard() {
 
   if (isLoading) return <LoadingScreen />;
 
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(app)" />
+      <Stack.Screen name="expenses" />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {
