@@ -82,8 +82,9 @@ export default function ProfileScreen() {
     }
 
     setSaving(true);
-    const { error } = await supabase
-      .from('users')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const usersTable = supabase.from('users') as any;
+    const { error } = await usersTable
       .update({
         name: name.trim() || null,
         upi_id: upiId.trim() || null,

@@ -14,9 +14,8 @@ import { ExpenseListSkeleton } from '@/features/expenses/components/ExpenseListS
 import { useGroupExpenses, useExpensesRealtime } from '@/features/expenses/hooks';
 import { BalancesTab } from '@/features/balances/components/BalancesTab';
 import { useGroupBalances, useBalancesRealtime } from '@/features/balances/hooks';
-import { useGroupSettlements, useSettlementsRealtime } from '@/features/settlements/hooks';
 import { useCurrentUserId } from '@/hooks/useSession';
-import { formatMoney } from '@/utils/money';
+import { GroupActivityFeed } from '@/features/activity/components/GroupActivityFeed';
 
 type GroupTab = 'expenses' | 'balances' | 'activity';
 
@@ -48,12 +47,9 @@ export default function GroupDetailScreen() {
     error: balancesError,
   } = useGroupBalances(groupId);
 
-  const { data: settlements, isLoading: settlementsLoading } = useGroupSettlements(groupId);
-
   useGroupRealtime(groupId);
   useExpensesRealtime(groupId);
   useBalancesRealtime(groupId);
-  useSettlementsRealtime(groupId);
 
   // Build a fast userId → {name, avatar_url} map so ExpenseListItem can
   // resolve payer info even when the PostgREST join doesn't populate it.
@@ -270,169 +266,11 @@ export default function GroupDetailScreen() {
         {/* ── Activity tab ── */}
         {activeTab === 'activity' && (
           <View style={{ paddingBottom: 40 }}>
-            {settlementsLoading ? (
-              <View style={{ paddingTop: 40, paddingHorizontal: 16 }}>
-                {[0, 1, 2].map((i) => (
-                  <View
-                    key={i}
-                    style={{
-                      backgroundColor: '#fff',
-                      borderRadius: 12,
-                      padding: 16,
-                      marginBottom: 10,
-                      flexDirection: 'row',
-                      gap: 12,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        backgroundColor: '#E2E8F0',
-                      }}
-                    />
-                    <View style={{ flex: 1, gap: 8 }}>
-                      <View
-                        style={{
-                          height: 12,
-                          width: '60%',
-                          borderRadius: 6,
-                          backgroundColor: '#E2E8F0',
-                        }}
-                      />
-                      <View
-                        style={{
-                          height: 10,
-                          width: '40%',
-                          borderRadius: 5,
-                          backgroundColor: '#E2E8F0',
-                          opacity: 0.6,
-                        }}
-                      />
-                    </View>
-                  </View>
-                ))}
-              </View>
-            ) : settlements && settlements.length > 0 ? (
-              <View style={{ marginTop: 16, paddingHorizontal: 16 }}>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: '700',
-                    color: '#94A3B8',
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                    marginBottom: 8,
-                    marginLeft: 4,
-                  }}
-                >
-                  Settlements
-                </Text>
-                <View
-                  style={{
-                    backgroundColor: '#fff',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.06,
-                    shadowRadius: 8,
-                    elevation: 3,
-                  }}
-                >
-                  {settlements.map((s, idx) => {
-                    const payerName = s.payer?.name ?? memberLookup[s.payer_id]?.name ?? 'Someone';
-                    const payeeName = s.payee?.name ?? memberLookup[s.payee_id]?.name ?? 'Someone';
-                    const isMe = s.payer_id === currentUserId;
-                    const date = new Date(s.settled_at).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                    });
-                    return (
-                      <View
-                        key={s.id}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingHorizontal: 16,
-                          paddingVertical: 14,
-                          borderBottomWidth: idx < settlements.length - 1 ? 1 : 0,
-                          borderBottomColor: '#F1F5F9',
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
-                            backgroundColor: '#ECFDF5',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginRight: 12,
-                          }}
-                        >
-                          <Text style={{ fontSize: 18 }}>💸</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={{ fontSize: 14, fontWeight: '600', color: '#0F172A' }}
-                            numberOfLines={1}
-                          >
-                            {isMe ? 'You' : payerName} paid{' '}
-                            {s.payer_id === currentUserId
-                              ? payeeName
-                              : s.payee_id === currentUserId
-                                ? 'you'
-                                : payeeName}
-                          </Text>
-                          <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                            {date}
-                            {s.note ? ` · ${s.note}` : ''}
-                            {s.method === 'upi' ? ' · UPI' : ''}
-                          </Text>
-                        </View>
-                        <Text style={{ fontSize: 15, fontWeight: '700', color: '#10B981' }}>
-                          {formatMoney(s.amount, group.currency)}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : (
-              <View style={{ paddingTop: 64, paddingHorizontal: 32, alignItems: 'center' }}>
-                <View
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 32,
-                    backgroundColor: '#F1F5F9',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 16,
-                  }}
-                >
-                  <Text style={{ fontSize: 28 }}>📋</Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '700',
-                    color: '#0F172A',
-                    marginBottom: 8,
-                    textAlign: 'center',
-                  }}
-                >
-                  No activity yet
-                </Text>
-                <Text
-                  style={{ fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 21 }}
-                >
-                  Settlements will appear here once someone settles up.
-                </Text>
-              </View>
-            )}
+            <GroupActivityFeed
+              groupId={groupId}
+              currency={group.currency}
+              currentUserId={currentUserId ?? ''}
+            />
           </View>
         )}
       </ScrollView>

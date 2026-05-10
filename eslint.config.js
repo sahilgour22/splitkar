@@ -30,6 +30,7 @@ module.exports = [
       'metro.config.js',
       'tailwind.config.js',
       'eslint.config.js',
+      'supabase/functions/**',
     ],
   },
 ];

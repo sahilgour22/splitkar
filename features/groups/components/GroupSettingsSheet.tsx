@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { LogOut, Settings2, Trash2, UserPlus } from 'lucide-react-native';
+import { Bell, LogOut, Settings2, Trash2, UserPlus } from 'lucide-react-native';
 
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { InviteSheet } from './InviteSheet';
+import { getNotificationsEnabled, setNotificationsEnabled } from '@/features/activity/api';
+import { useCurrentUserId } from '@/hooks/useSession';
 import { useDeleteGroup, useLeaveGroup, useRenameGroup } from '../hooks';
 import type { GroupWithMembers } from '../types';
 
@@ -19,10 +21,18 @@ type View_ = 'menu' | 'rename' | 'delete_confirm';
 
 export function GroupSettingsSheet({ visible, onClose, group }: Props) {
   const router = useRouter();
+  const currentUserId = useCurrentUserId();
   const [view, setView] = useState<View_>('menu');
   const [showInvite, setShowInvite] = useState(false);
   const [renameValue, setRenameValue] = useState(group.name);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  useEffect(() => {
+    if (!visible || !currentUserId) return;
+    void getNotificationsEnabled(group.id, currentUserId).then(setNotifEnabled);
+  }, [visible, group.id, currentUserId]);
 
   const leaveGroup = useLeaveGroup();
   const deleteGroup = useDeleteGroup();
@@ -35,6 +45,14 @@ export function GroupSettingsSheet({ visible, onClose, group }: Props) {
     setRenameValue(group.name);
     setDeleteConfirmName('');
     onClose();
+  }
+
+  async function handleToggleNotifications(value: boolean) {
+    if (!currentUserId) return;
+    setNotifEnabled(value);
+    setNotifLoading(true);
+    await setNotificationsEnabled(group.id, currentUserId, value);
+    setNotifLoading(false);
   }
 
   async function handleLeave() {
@@ -104,6 +122,30 @@ export function GroupSettingsSheet({ visible, onClose, group }: Props) {
                 setShowInvite(true);
               }}
             />
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 14,
+                borderBottomWidth: 1,
+                borderBottomColor: '#F1F5F9',
+                gap: 14,
+              }}
+            >
+              <Bell size={20} color="#6C47FF" />
+              <Text style={{ flex: 1, fontSize: 15, color: '#0F172A' }}>Group notifications</Text>
+              {notifLoading ? (
+                <ActivityIndicator size="small" color="#6C47FF" />
+              ) : (
+                <Switch
+                  value={notifEnabled}
+                  onValueChange={(v) => void handleToggleNotifications(v)}
+                  trackColor={{ false: '#E2E8F0', true: '#6C47FF' }}
+                  thumbColor="#fff"
+                />
+              )}
+            </View>
 
             {isAdmin && (
               <SettingRow

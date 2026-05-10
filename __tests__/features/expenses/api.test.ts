@@ -20,7 +20,7 @@ jest.mock('@/lib/supabase', () => {
       chain[m] = jest.fn().mockReturnThis();
     });
     // Make the chain thenable so `await chain` resolves to resolvedValue
-    (chain as { then: (resolve: (v: unknown) => void) => Promise<unknown> }).then = (
+    (chain as unknown as { then: (resolve: (v: unknown) => void) => Promise<unknown> }).then = (
       resolve: (v: unknown) => void,
     ) => Promise.resolve(resolvedValue).then(resolve);
     Object.assign(chainMock, chain);

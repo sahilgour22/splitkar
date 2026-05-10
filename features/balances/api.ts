@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import type { Debt } from './simplify';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rpc = supabase.rpc.bind(supabase) as (fn: string, args?: Record<string, unknown>) => any;
+
 interface ComputeBalancesRow {
   debtor_id: string;
   creditor_id: string;
@@ -11,10 +14,7 @@ export async function fetchGroupBalances(groupId: string): Promise<{
   data: Debt[] | null;
   error: string | null;
 }> {
-  const { data, error } = await supabase.rpc('compute_balances', { p_group_id: groupId } as Record<
-    string,
-    unknown
-  >);
+  const { data, error } = await rpc('compute_balances', { p_group_id: groupId });
 
   if (error) return { data: null, error: error.message };
 

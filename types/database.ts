@@ -22,6 +22,7 @@ export interface Database {
           avatar_url: string | null;
           default_currency: string;
           upi_id: string | null;
+          last_seen_activity_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -43,6 +44,7 @@ export interface Database {
           avatar_url?: string | null;
           default_currency?: string;
           upi_id?: string | null;
+          last_seen_activity_id?: string | null;
           updated_at?: string;
         };
       };
@@ -85,6 +87,7 @@ export interface Database {
           user_id: string;
           role: 'admin' | 'member';
           joined_at: string;
+          notifications_enabled: boolean;
         };
         Insert: {
           id?: string;
@@ -92,9 +95,11 @@ export interface Database {
           user_id: string;
           role?: 'admin' | 'member';
           joined_at?: string;
+          notifications_enabled?: boolean;
         };
         Update: {
           role?: 'admin' | 'member';
+          notifications_enabled?: boolean;
         };
       };
       expenses: {
@@ -227,6 +232,49 @@ export interface Database {
             | 'group_created';
           payload?: Json;
           created_at?: string;
+        };
+        Update: Record<string, never>;
+      };
+      push_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          token: string;
+          platform: 'ios' | 'android' | 'web';
+          last_seen_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          token: string;
+          platform: 'ios' | 'android' | 'web';
+          last_seen_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          last_seen_at?: string;
+          platform?: 'ios' | 'android' | 'web';
+        };
+      };
+      push_log: {
+        Row: {
+          id: string;
+          activity_id: string;
+          user_id: string;
+          token: string;
+          status: string;
+          error: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          activity_id: string;
+          user_id: string;
+          token: string;
+          status: string;
+          error?: string | null;
+          sent_at?: string;
         };
         Update: Record<string, never>;
       };

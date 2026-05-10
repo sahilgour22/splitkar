@@ -11,6 +11,7 @@ import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/features/auth/store';
 import { useAuthListener } from '@/features/auth/hooks/useAuth';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { usePushNotifications } from '@/features/notifications/hooks';
 
 // Initialise Sentry before anything renders
 Sentry.init({
@@ -22,6 +23,9 @@ function AuthGuard() {
   const router = useRouter();
   const segments = useSegments();
   const { session, isLoading } = useAuthStore();
+
+  // Register push token + wire deep-link handler whenever the user is signed in
+  usePushNotifications(!!session);
 
   useEffect(() => {
     if (isLoading) return;

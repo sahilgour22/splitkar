@@ -33,6 +33,7 @@ const MOCK_MEMBERS: GroupMemberWithUser[] = [
     user_id: 'user-1',
     role: 'admin',
     joined_at: '2026-05-07T00:00:00Z',
+    notifications_enabled: true,
     user: { id: 'user-1', name: 'Sahil', avatar_url: null, upi_id: null },
   },
   {
@@ -41,6 +42,7 @@ const MOCK_MEMBERS: GroupMemberWithUser[] = [
     user_id: 'user-2',
     role: 'member',
     joined_at: '2026-05-07T00:01:00Z',
+    notifications_enabled: true,
     user: { id: 'user-2', name: 'Priya', avatar_url: null, upi_id: null },
   },
 ];
@@ -96,8 +98,9 @@ describe('MemberAvatarRow', () => {
       id: `mem-${i}`,
       group_id: 'group-1',
       user_id: `user-${i}`,
-      role: 'member',
+      role: 'member' as const,
       joined_at: '2026-05-07T00:00:00Z',
+      notifications_enabled: true,
       user: { id: `user-${i}`, name: `Member ${i}`, avatar_url: null, upi_id: null },
     }));
     const { toJSON } = render(<MemberAvatarRow members={manyMembers} />);

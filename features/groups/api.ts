@@ -34,6 +34,7 @@ type MemberRow = {
   role: string;
   joined_at: string;
   user_id: string;
+  notifications_enabled: boolean;
   users: {
     id: string;
     name: string | null;
@@ -119,7 +120,9 @@ export async function getGroup(groupId: string): Promise<Result<GroupWithMembers
 
   const { data: rawMembers, error: membersErr } = await supabase
     .from('group_members')
-    .select('id, role, joined_at, user_id, users(id, name, avatar_url, upi_id)')
+    .select(
+      'id, role, joined_at, user_id, notifications_enabled, users(id, name, avatar_url, upi_id)',
+    )
     .eq('group_id', groupId)
     .order('joined_at', { ascending: true })
     .returns<MemberRow[]>();
@@ -139,6 +142,7 @@ export async function getGroup(groupId: string): Promise<Result<GroupWithMembers
         user_id: m.user_id,
         role: m.role as 'admin' | 'member',
         joined_at: m.joined_at,
+        notifications_enabled: m.notifications_enabled,
         user: m.users ?? { id: m.user_id, name: null, avatar_url: null, upi_id: null },
       })),
     },
